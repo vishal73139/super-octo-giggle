@@ -1,4 +1,5 @@
-const sql = require("./db.js");
+const sql= require("./db.js");
+const { Connection, Request } = require("tedious");
 
 // constructor
 const Customer = function(customer) {
@@ -40,16 +41,41 @@ Customer.findById = (customerId, result) => {
 };
 
 Customer.getAll = result => {
-  sql.query("SELECT * FROM customers", (err, res) => {
-    if (err) {
-      console.log("error: ", err);
-      result(null, err);
-      return;
-    }
 
-    console.log("customers: ", res);
-    result(null, res);
+  // sql.query("SELECT * FROM customer_base", (err, res) => {
+  //   if (err) {
+  //     console.log("error: ", err);
+  //     result(null, err);
+  //     return;
+  //   }
+
+  //   console.log("customers: ", res);
+  //   result(null, res);
+  // });
+
+   const request = new Request(
+    `SELECT * FROM customer_base LIMIT 3`,
+    (err, rowCount) => {
+      if (err) {
+        console.error(err.message);
+        result(null, err);
+        return;
+      } else {
+        console.log(`${rowCount} row(s) returned`);
+        result(null, rowCount);
+       
+      }
+    }
+  );
+
+  request.on("row", columns => {
+    columns.forEach(column => {
+      console.log("%s\t%s", column.metadata.colName, column.value);
+    });
   });
+
+  sql.execSql(request);
+
 };
 
 Customer.updateById = (id, customer, result) => {
